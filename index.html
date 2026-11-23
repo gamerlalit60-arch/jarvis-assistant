@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  background:#020914;
+  color:#00eaff;
+  text-align:center;
+  font-family:monospace;
+  padding:25px;
+}
+h1 {letter-spacing:6px;text-shadow:0 0 15px #00eaff;}
+#mic {
+  width:160px;height:160px;border-radius:50%;
+  margin:50px 0;background:#07182b;color:#00eaff;
+  border:4px solid #00eaff;box-shadow:0 0 30px #00eaff;
+  font-size:55px;
+}
+#status {font-size:18px;margin:20px;}
+</style>
+</head>
+<body>
+
+<h1>J.A.R.V.I.S</h1>
+<p>VOICE ASSISTANT</p>
+<button id="mic" onclick="listen()">🎙️</button>
+<p id="status">SYSTEM READY</p>
+
+<script>
+function speak(text) {
+  let voice = new SpeechSynthesisUtterance(text);
+  voice.lang = "en-US";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(voice);
+}
+
+function listen() {
+  let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SR) {
+    document.getElementById("status").innerText =
+      "Speech recognition not supported.";
+    return;
+  }
+
+  let rec = new SR();
+  rec.lang = "en-US";
+  document.getElementById("status").innerText = "LISTENING...";
+
+  rec.onresult = function(e) {
+    let command = e.results[0][0].transcript.toLowerCase();
+    let answer = "";
+
+    if (command.includes("hello")) {
+      answer = "Hello sir. I am online.";
+    } else if (command.includes("time")) {
+      answer = "The time is " + new Date().toLocaleTimeString();
+    } else if (command.includes("date")) {
+      answer = "Today is " + new Date().toLocaleDateString();
+    } else if (command.includes("your name")) {
+      answer = "I am Jarvis, your personal assistant.";
+    } else {
+      answer = "I heard " + command + ". This command is not programmed yet.";
+    }
+
+    document.getElementById("status").innerText = "JARVIS: " + answer;
+    speak(answer);
+  };
+
+  rec.onerror = function(e) {
+    document.getElementById("status").innerText = "MIC ERROR: " + e.error;
+  };
+
+  rec.start();
+}
+</script>
+</body>
+</html>
