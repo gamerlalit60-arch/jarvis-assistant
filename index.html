@@ -1,204 +1,221 @@
+ 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JARVIS 2.0</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS 3.0</title>
 
 <style>
-* {box-sizing:border-box}
-
 body {
-  margin:0;
-  background:#020712;
-  color:#00eaff;
-  font-family:monospace;
-  text-align:center;
-  min-height:100vh;
-  padding:25px 15px;
+  background: #050b18;
+  color: #00eaff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 30px 15px;
 }
 
 h1 {
-  margin-top:40px;
-  letter-spacing:8px;
-  font-size:34px;
-  text-shadow:0 0 20px #00eaff;
-}
-
-.sub {
-  letter-spacing:3px;
-  color:#8beeff;
+  letter-spacing: 5px;
+  text-shadow: 0 0 20px #00eaff;
 }
 
 .reactor {
-  width:230px;
-  height:230px;
-  margin:65px auto 35px;
-  border-radius:50%;
-  border:3px solid #00eaff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 0 20px #00eaff,
-             inset 0 0 30px #00eaff;
-  background:radial-gradient(circle,#10283d,#020712 70%);
-  transition:0.3s;
-}
-
-.reactor.listening {
-  animation:pulse 1s infinite alternate;
+  width: 170px;
+  height: 170px;
+  margin: 40px auto;
+  border: 5px solid #00eaff;
+  border-radius: 50%;
+  box-shadow: 0 0 30px #00eaff, inset 0 0 25px #00eaff;
+  animation: pulse 2s infinite alternate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
 }
 
 @keyframes pulse {
-  from {transform:scale(1);box-shadow:0 0 20px #00eaff}
-  to {transform:scale(1.07);box-shadow:0 0 60px #00eaff}
-}
-
-.core {
-  font-size:65px;
+  from { transform: scale(.95); box-shadow: 0 0 15px #00eaff; }
+  to { transform: scale(1.06); box-shadow: 0 0 45px #00eaff; }
 }
 
 button {
-  background:#00eaff;
-  color:#020712;
-  border:0;
-  border-radius:12px;
-  padding:16px 25px;
-  font-size:18px;
-  font-weight:bold;
-  margin:10px;
+  background: transparent;
+  color: #00eaff;
+  border: 2px solid #00eaff;
+  padding: 15px 25px;
+  margin: 10px;
+  border-radius: 12px;
+  font-size: 16px;
 }
 
-button:active {transform:scale(.95)}
+button:active {
+  background: #00eaff;
+  color: #050b18;
+}
 
 #status {
-  margin:25px auto;
-  font-size:18px;
-  min-height:50px;
+  color: white;
+  margin: 20px;
 }
 
-#heard {
-  color:#9beeff;
-  font-size:15px;
-}
-
-.footer {
-  margin-top:70px;
-  font-size:12px;
-  color:#526e8b;
+#log {
+  color: #b5dfff;
+  margin-top: 25px;
+  overflow-wrap: anywhere;
 }
 </style>
 </head>
 
 <body>
 
-<h1>J.A.R.V.I.S</h1>
-<p class="sub">PERSONAL AI SYSTEM 2.0</p>
+<h1>JARVIS 3.0</h1>
+<p>PERSONAL VOICE ASSISTANT</p>
 
-<div class="reactor" id="reactor">
-  <div class="core">◉</div>
-</div>
-
-<button onclick="listen()">🎙️ ACTIVATE</button>
-<button onclick="stop()">■ STOP</button>
+<div class="reactor">J</div>
 
 <p id="status">SYSTEM READY</p>
-<p id="heard"></p>
 
-<div class="footer">
-JARVIS 2.0 • VOICE SYSTEM
-</div>
+<button onclick="listen()">ACTIVATE 🎙️</button>
+<button onclick="stopJarvis()">STOP ⏹️</button>
+
+<div id="log">Awaiting command...</div>
 
 <script>
+const statusText = document.getElementById("status");
+const log = document.getElementById("log");
 
-function speak(text) {
-  speechSynthesis.cancel();
-  let s = new SpeechSynthesisUtterance(text);
-  s.lang = "en-IN";
-  s.rate = 1;
-  speechSynthesis.speak(s);
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition;
+let listening = false;
+
+function speak(message) {
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(message);
+  speech.lang = "en-IN";
+
+  window.speechSynthesis.speak(speech);
 }
 
 function listen() {
-  let SR = window.SpeechRecognition ||
-           window.webkitSpeechRecognition;
-
-  if (!SR) {
-    document.getElementById("status").innerText =
-      "Speech recognition unavailable";
+  if (!SpeechRecognition) {
+    statusText.innerText = "Speech recognition unsupported";
+    speak("Speech recognition is not supported");
     return;
   }
 
-  let rec = new SR();
-  rec.lang = "en-IN";
-  rec.continuous = false;
-  rec.interimResults = false;
+  if (listening) return;
 
-  document.getElementById("reactor").classList.add("listening");
-  document.getElementById("status").innerText = "LISTENING...";
-  document.getElementById("heard").innerText = "";
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
 
-  rec.onresult = function(e) {
-    let c = e.results[0][0].transcript.toLowerCase();
-    document.getElementById("heard").innerText = "YOU: " + c;
-
-    let r = "";
-
-    if (c.includes("hello") || c.includes("namaste")) {
-      r = "Hello sir. JARVIS 2.0 is ready.";
-    }
-
-    else if (c.includes("time") || c.includes("samay")) {
-      r = "The time is " + new Date().toLocaleTimeString();
-    }
-
-    else if (c.includes("date") || c.includes("tarikh")) {
-      r = "Today is " + new Date().toLocaleDateString();
-    }
-
-    else if (c.includes("your name") || c.includes("naam")) {
-      r = "I am JARVIS version 2.0.";
-    }
-
-    else if (c.includes("google")) {
-      r = "Opening Google.";
-      window.open("https://www.google.com", "_blank");
-    }
-
-    else if (c.includes("youtube")) {
-      r = "Opening YouTube.";
-      window.open("https://www.youtube.com", "_blank");
-    }
-
-    else if (c.includes("how are you")) {
-      r = "All systems are functioning normally.";
-    }
-
-    else {
-      r = "Command not recognized. My system is learning.";
-    }
-
-    document.getElementById("status").innerText = "JARVIS: " + r;
-    speak(r);
+  recognition.onstart = () => {
+    listening = true;
+    statusText.innerText = "LISTENING...";
   };
 
-  rec.onerror = function(e) {
-    document.getElementById("status").innerText =
-      "ERROR: " + e.error;
+  recognition.onresult = (event) => {
+    const command = event.results[0][0].transcript.toLowerCase();
+
+    log.innerText = "Command: " + command;
+    executeCommand(command);
   };
 
-  rec.onend = function() {
-    document.getElementById("reactor").classList.remove("listening");
+  recognition.onerror = (event) => {
+    statusText.innerText = "ERROR: " + event.error;
   };
 
-  rec.start();
+  recognition.onend = () => {
+    listening = false;
+    if (statusText.innerText === "LISTENING...") {
+      statusText.innerText = "SYSTEM READY";
+    }
+  };
+
+  recognition.start();
 }
 
-function stop() {
-  speechSynthesis.cancel();
-  document.getElementById("reactor").classList.remove("listening");
-  document.getElementById("status").innerText = "SYSTEM STOPPED";
+function executeCommand(command) {
+  statusText.innerText = "PROCESSING...";
+
+  if (command.includes("hello") || command.includes("namaste")) {
+    speak("Hello sir. Jarvis 3.0 is online.");
+  }
+
+  else if (command.includes("time") || command.includes("samay")) {
+    const time = new Date().toLocaleTimeString("en-IN");
+    speak("The time is " + time);
+  }
+
+  else if (command.includes("date") || command.includes("tarikh")) {
+    const date = new Date().toLocaleDateString("en-IN");
+    speak("Today's date is " + date);
+  }
+
+  else if (command.includes("your name") || command.includes("naam")) {
+    speak("I am Jarvis 3.0, your voice assistant.");
+  }
+
+  else if (command.includes("youtube") || command.includes("yt kholo")) {
+    speak("Opening YouTube");
+    window.open("https://www.youtube.com", "_blank");
+  }
+
+  else if (command.includes("google")) {
+    speak("Opening Google");
+    window.open("https://www.google.com", "_blank");
+  }
+
+  else if (command.includes("wikipedia")) {
+    speak("Opening Wikipedia");
+    window.open("https://www.wikipedia.org", "_blank");
+  }
+
+  else if (command.includes("search")) {
+    const query = command.replace("search", "").trim();
+
+    if (query) {
+      speak("Searching Google");
+      window.open(
+        "https://www.google.com/search?q=" + encodeURIComponent(query),
+        "_blank"
+      );
+    } else {
+      speak("What should I search?");
+    }
+  }
+
+  else if (command.includes("how are you")) {
+    speak("I am functioning perfectly. Thank you.");
+  }
+
+  else if (command.includes("stop")) {
+    stopJarvis();
+  }
+
+  else {
+    speak("Sorry, I do not understand this command yet.");
+  }
+
+  statusText.innerText = "SYSTEM READY";
 }
 
+function stopJarvis() {
+  if (recognition) {
+    recognition.abort();
+  }
+
+  listening = false;
+  window.speechSynthesis.cancel();
+  statusText.innerText = "SYSTEM STOPPED";
+}
 </script>
+
 </body>
 </html>
