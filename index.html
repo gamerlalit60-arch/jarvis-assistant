@@ -2,78 +2,203 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS 2.0</title>
+
 <style>
+* {box-sizing:border-box}
+
 body {
-  background:#020914;
+  margin:0;
+  background:#020712;
   color:#00eaff;
-  text-align:center;
   font-family:monospace;
-  padding:25px;
+  text-align:center;
+  min-height:100vh;
+  padding:25px 15px;
 }
-h1 {letter-spacing:6px;text-shadow:0 0 15px #00eaff;}
-#mic {
-  width:160px;height:160px;border-radius:50%;
-  margin:50px 0;background:#07182b;color:#00eaff;
-  border:4px solid #00eaff;box-shadow:0 0 30px #00eaff;
-  font-size:55px;
+
+h1 {
+  margin-top:40px;
+  letter-spacing:8px;
+  font-size:34px;
+  text-shadow:0 0 20px #00eaff;
 }
-#status {font-size:18px;margin:20px;}
+
+.sub {
+  letter-spacing:3px;
+  color:#8beeff;
+}
+
+.reactor {
+  width:230px;
+  height:230px;
+  margin:65px auto 35px;
+  border-radius:50%;
+  border:3px solid #00eaff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 0 20px #00eaff,
+             inset 0 0 30px #00eaff;
+  background:radial-gradient(circle,#10283d,#020712 70%);
+  transition:0.3s;
+}
+
+.reactor.listening {
+  animation:pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from {transform:scale(1);box-shadow:0 0 20px #00eaff}
+  to {transform:scale(1.07);box-shadow:0 0 60px #00eaff}
+}
+
+.core {
+  font-size:65px;
+}
+
+button {
+  background:#00eaff;
+  color:#020712;
+  border:0;
+  border-radius:12px;
+  padding:16px 25px;
+  font-size:18px;
+  font-weight:bold;
+  margin:10px;
+}
+
+button:active {transform:scale(.95)}
+
+#status {
+  margin:25px auto;
+  font-size:18px;
+  min-height:50px;
+}
+
+#heard {
+  color:#9beeff;
+  font-size:15px;
+}
+
+.footer {
+  margin-top:70px;
+  font-size:12px;
+  color:#526e8b;
+}
 </style>
 </head>
+
 <body>
 
 <h1>J.A.R.V.I.S</h1>
-<p>VOICE ASSISTANT</p>
-<button id="mic" onclick="listen()">🎙️</button>
+<p class="sub">PERSONAL AI SYSTEM 2.0</p>
+
+<div class="reactor" id="reactor">
+  <div class="core">◉</div>
+</div>
+
+<button onclick="listen()">🎙️ ACTIVATE</button>
+<button onclick="stop()">■ STOP</button>
+
 <p id="status">SYSTEM READY</p>
+<p id="heard"></p>
+
+<div class="footer">
+JARVIS 2.0 • VOICE SYSTEM
+</div>
 
 <script>
+
 function speak(text) {
-  let voice = new SpeechSynthesisUtterance(text);
-  voice.lang = "en-US";
   speechSynthesis.cancel();
-  speechSynthesis.speak(voice);
+  let s = new SpeechSynthesisUtterance(text);
+  s.lang = "en-IN";
+  s.rate = 1;
+  speechSynthesis.speak(s);
 }
 
 function listen() {
-  let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let SR = window.SpeechRecognition ||
+           window.webkitSpeechRecognition;
 
   if (!SR) {
     document.getElementById("status").innerText =
-      "Speech recognition not supported.";
+      "Speech recognition unavailable";
     return;
   }
 
   let rec = new SR();
-  rec.lang = "en-US";
+  rec.lang = "en-IN";
+  rec.continuous = false;
+  rec.interimResults = false;
+
+  document.getElementById("reactor").classList.add("listening");
   document.getElementById("status").innerText = "LISTENING...";
+  document.getElementById("heard").innerText = "";
 
   rec.onresult = function(e) {
-    let command = e.results[0][0].transcript.toLowerCase();
-    let answer = "";
+    let c = e.results[0][0].transcript.toLowerCase();
+    document.getElementById("heard").innerText = "YOU: " + c;
 
-    if (command.includes("hello")) {
-      answer = "Hello sir. I am online.";
-    } else if (command.includes("time")) {
-      answer = "The time is " + new Date().toLocaleTimeString();
-    } else if (command.includes("date")) {
-      answer = "Today is " + new Date().toLocaleDateString();
-    } else if (command.includes("your name")) {
-      answer = "I am Jarvis, your personal assistant.";
-    } else {
-      answer = "I heard " + command + ". This command is not programmed yet.";
+    let r = "";
+
+    if (c.includes("hello") || c.includes("namaste")) {
+      r = "Hello sir. JARVIS 2.0 is ready.";
     }
 
-    document.getElementById("status").innerText = "JARVIS: " + answer;
-    speak(answer);
+    else if (c.includes("time") || c.includes("samay")) {
+      r = "The time is " + new Date().toLocaleTimeString();
+    }
+
+    else if (c.includes("date") || c.includes("tarikh")) {
+      r = "Today is " + new Date().toLocaleDateString();
+    }
+
+    else if (c.includes("your name") || c.includes("naam")) {
+      r = "I am JARVIS version 2.0.";
+    }
+
+    else if (c.includes("google")) {
+      r = "Opening Google.";
+      window.open("https://www.google.com", "_blank");
+    }
+
+    else if (c.includes("youtube")) {
+      r = "Opening YouTube.";
+      window.open("https://www.youtube.com", "_blank");
+    }
+
+    else if (c.includes("how are you")) {
+      r = "All systems are functioning normally.";
+    }
+
+    else {
+      r = "Command not recognized. My system is learning.";
+    }
+
+    document.getElementById("status").innerText = "JARVIS: " + r;
+    speak(r);
   };
 
   rec.onerror = function(e) {
-    document.getElementById("status").innerText = "MIC ERROR: " + e.error;
+    document.getElementById("status").innerText =
+      "ERROR: " + e.error;
+  };
+
+  rec.onend = function() {
+    document.getElementById("reactor").classList.remove("listening");
   };
 
   rec.start();
 }
+
+function stop() {
+  speechSynthesis.cancel();
+  document.getElementById("reactor").classList.remove("listening");
+  document.getElementById("status").innerText = "SYSTEM STOPPED";
+}
+
 </script>
 </body>
 </html>
